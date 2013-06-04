@@ -8,13 +8,13 @@ URL in a textarea.
 
 [![default][2]][1]
 
-  [1]: imgs/no-expanded.png
-  [2]: imgs/no-expanded (default)
+  [1]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/no-expanded.png
+  [2]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/no-expanded.png (default)
 
 [![expanded link][2]][1]
 
-  [1]: imgs/expanded.png
-  [2]: imgs/expanded (expanded link)
+  [1]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/expanded.png
+  [2]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/expanded.png (expanded link)
 
 Parts of the project
 --------------------

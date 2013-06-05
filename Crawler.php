@@ -99,8 +99,14 @@ class Crawler {
 
         foreach ($matches as $imageTag)
         {
+
             // Looks for the src attribute of the image
             $srcAttributePosition = strpos($imageTag, 'src="');
+
+            if (!$srcAttributePosition) {
+                continue;
+            }
+
             $imageTag = substr($imageTag, $srcAttributePosition, -1);
 
             // looks for the first quote of the src attribute

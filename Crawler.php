@@ -1,5 +1,9 @@
 <?php
 
+/**
+* @author José Luis García <jlgarcia.me>
+* @license MIT <https://raw.github.com/jlgarhdez/link-expander/master/LICENSE>
+*/
 class Crawler {
 
     /**

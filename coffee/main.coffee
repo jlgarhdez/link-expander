@@ -1,6 +1,6 @@
 ###*
 * @author José Luis García <jlgarcia.me>
-* @license MIT
+* @license MIT <https://raw.github.com/jlgarhdez/link-expander/master/LICENSE>
 ###
 
 textarea = document.getElementById 'textarea'

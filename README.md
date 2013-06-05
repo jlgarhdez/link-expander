@@ -11,10 +11,10 @@ URL in a textarea.
   [1]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/no-expanded.png
   [2]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/no-expanded.png (default)
 
-[![expanded link][2]][1]
+[![expanded link][4]][3]
 
-  [1]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/expanded.png
-  [2]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/expanded.png (expanded link)
+  [3]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/expanded.png
+  [4]: https://raw.github.com/jlgarhdez/link-expander/master/imgs/expanded.png (expanded link)
 
 Parts of the project
 --------------------

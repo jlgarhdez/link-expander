@@ -17,37 +17,47 @@ textarea.addEventListener 'paste', pasteHandler, false
 # This function does the AJAX request to the expander script and parses the
 # received information
 expandLink = (url) ->
+  # initializes the XHR object
   xhr = new XMLHttpRequest
+
+  # set the config options for the XHR
   xhr.open "GET", "expander.php?url=#{url}", true
+
+  # onreadystatechange callback
   xhr.onreadystatechange = (e) ->
     if xhr.readyState == 4
       response = JSON.parse xhr.responseText
 
       expandedInfo = document.getElementsByClassName('expanded-info')[0]
 
+      # Create the anchor item for the title
       link = document.createElement 'a'
       link.setAttribute 'href', url
       link.innerHTML = response.title
 
+      # Create title div
       title = document.createElement 'div'
       title.setAttribute 'class', 'title'
       title.appendChild link
 
+      # Create de title description
       description = document.createElement 'div'
       description.setAttribute 'class', 'description'
       description.innerHTML = response.description
 
+      # Create the container for the images
       imagesDiv = document.createElement 'div'
       imagesDiv.setAttribute 'id', 'images'
       imagesDiv.setAttribute 'style', 'width:150px;overflow:hidden;float: right;'
 
-      flag = 0
       # loop the images array
+      flag = 0
       for imageUrl in response.images
         image = document.createElement 'img'
         image.setAttribute 'src', imageUrl
 
-        if flag != 0
+        # checks if we are creating the first img element
+        if flag++ != 0
           image.style.display = 'none'
           image.setAttribute 'class', 'image'
         else
@@ -57,28 +67,33 @@ expandLink = (url) ->
 
         imagesDiv.appendChild image
 
-        flag++
-
+      # Creates the next image button
       nextImage = document.createElement 'div'
       nextImage.setAttribute 'class', 'arrow btn next-image'
       nextImage.innerHTML = '&rarr;'
       nextImage.onclick = nextImageClick
 
+      # Creates the previous image button
       previousImage = document.createElement 'div'
       previousImage.setAttribute 'class', 'arrow btn previous-image'
       previousImage.innerHTML = '&larr;'
       previousImage.onclick = previousImageClick
 
-      imagesDiv.appendChild previousImage
-      imagesDiv.appendChild nextImage
+      # Checks if we have images for displaying hte next and previous buttons
+      if response.images.length > 0
+        imagesDiv.appendChild previousImage
+        imagesDiv.appendChild nextImage
 
+      # Add all the previously created elements to the expanded info box
       expandedInfo.appendChild title
       expandedInfo.appendChild description
       expandedInfo.appendChild imagesDiv
       expandedInfo.style.display = 'block'
 
+  # Performs the xhr
   xhr.send null
 
+# Callback for the next image button
 nextImageClick = (event) ->
   activeImage = document.getElementsByClassName('active').item(0)
   activeImageId = activeImage.id.charAt activeImage.id.length - 1
@@ -94,6 +109,7 @@ nextImageClick = (event) ->
     activeImage.style.display = 'none'
   @
 
+# Callback for the previous image button
 previousImageClick = (event) ->
   activeImage = document.getElementsByClassName('active').item(0)
   activeImageId = activeImage.id.charAt activeImage.id.length - 1

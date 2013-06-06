@@ -9,35 +9,17 @@ class Crawler {
     /**
      * @var String the url of the web page to crawl
      */
-    private $urlToCrawl;
+    public $urlToCrawl;
 
     /**
      * @var String the string containing the content of the webpage
      */
-    private $fullReturnedDOM;
+    public $fullReturnedDOM;
 
     /**
-     * @var String the pattern for extracting title
+     * @var String the string containing the content of the webpage
      */
-    private $titlePattern = '/<title>([\s\S]+)<\/title>/i';
-
-    /**
-     * @var String the pattern for extracting the content of the first paragraph
-     */
-    private $paragraphPattern = '/<p>([\s\S]*?)<\/p>/i';
-
-    /**
-     * @var String the pattern for extracting the firs image of the page
-     */
-    private $imagePattern = '#<img[^>]*>#i';
-
-    /**
-     * from css-tricks.com
-     *
-     * @var String the pattern for extracting the firs image of the page
-     */
-    private $urlPattern= "/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/";
-
+    public $parsedDOM;
 
     /**
      * @param $url String the URL of the page we want to crawl
@@ -53,89 +35,132 @@ class Crawler {
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         $this->fullReturnedDOM = utf8_decode(curl_exec($curl));
         curl_close($curl);
+        $this->parsedDOM = new \DomDocument();
+        $this->parsedDOM->loadHTML($this->fullReturnedDOM);
+        $this->parsedDOM->preservedWhiteSpace = false;
+
         return $this->fullReturnedDOM;
     }
 
+    /**
+     * Returns the title of the page if exists. If it doesn't exists, return the
+     * <h1> content
+     *
+     * @return string the title of the page
+     */
     public function extractTitle()
     {
-        $matches = array();
+        $title = $this->parsedDOM->getElementsByTagName('title')->item(0);
 
-        preg_match($this->titlePattern, $this->fullReturnedDOM, $matches);
-
-        $ret = false;
-
-        if ($matches !== array()) {
-            $ret = $matches[1];
+        if (
+            $title !== null
+            && $title->nodeValue !== ''
+        ) {
+            return $title->nodeValue;
+        } else {
+            return
+                $this
+                ->parsedDOM
+                ->getElementsByTagName('h1')
+                ->item(0)
+                ->nodeValue;
         }
-
-        return utf8_encode($ret);
     }
 
+    /**
+     * Looks for the most relevant content excerpt of the page. For extracting
+     * the most relevant excerpt follows the next steps:
+     *
+     * 1. Check if the page layout is OpenGraph compliant and get the
+     *    description if so.
+     * 2. If the page is not OG compliant, tries to get the meta description.
+     * 3. If the page has not meta description tag but has html5 layout, look 
+     *    for the first <p> inside the first <article>
+     * 4. If the page does not have any <article> tag, returns the first
+     *    paragraph
+     * 5. Return the bare text inside the body tag.
+     *
+     * @return string the most relevant description
+     */
     public function extractContent()
     {
-        $ret = '';
+        $metas = $this->parsedDOM->getElementsByTagName('meta');
 
-        $ret = $this->extractFirstParagraph();
+        // If exists meta-description, uses it
+        foreach ($metas as $meta)
+        {
+            // Loops the list of attributes
+            foreach ($meta->attributes as $attribute)
+            {
 
-        return $ret;
-    }
+                // Checks if the page is OG Compliant
+                if ($attribute->name == 'name'
+                    && $attribute->value == 'og:description'
+                    && $meta->attributes->getNamedItem('content')->value !== ''
+                ) {
+                    // Returns the og:description
+                    return trim($meta->attributes->getNamedItem('content')->value);
+                }
 
-    public function extractFirstParagraph()
-    {
-        $ret = false;
-        $matches = array();
+                // looks for the description meta tag
+                if ($attribute->name == 'name'
+                    && $attribute->value == 'description'
+                    && $meta->attributes->getNamedItem('content')->value !== ''
+                ) {
+                    return trim($meta->attributes->getNamedItem('content')->value);
+                }
+            }
+        }
 
-        preg_match($this->paragraphPattern, $this->fullReturnedDOM, $matches);
+        $article = $this->parsedDOM->getElementsByTagName('article')->item(0);
 
-        return
-            trim(
-            preg_replace('/\s+/', ' ',
-            utf8_encode(
-            strip_tags(
-                $matches[0]))));
+        if ($article !== null ) {
+            // Search the first paragraph inside the article
+            $paragraph = $article->firstChild->nodeValue;
+            return trim($paragraph);
+
+        }
+
+        $paragraph = $this
+                ->parsedDOM
+                ->getElementsByTagName('p')
+                ->item(0);
+
+        if ($paragraph !== null) {
+            return trim($paragraph);
+        }
+
+        return trim($this
+            ->parsedDOM
+            ->getElementsByTagName('body')
+            ->item(0)
+            ->nodeValue);
     }
 
     public function extractImages()
     {
-        $ret = array();
-        preg_match_all($this->imagePattern, $this->fullReturnedDOM, $matches);
-        $matches = $matches[0];
+        $urlInfo = parse_url($this->urlToCrawl);
+        $images = $this->parsedDOM->getElementsByTagName('img');
+        $urlPattern= "/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/";
+        $imageUrlList = array();
 
-        foreach ($matches as $imageTag)
+        foreach ($images as $image) 
         {
-
-            // Looks for the src attribute of the image
-            $srcAttributePosition = strpos($imageTag, 'src="');
-
-            if (!$srcAttributePosition) {
-                continue;
+            foreach ($image->attributes as $attribute) 
+            {
+                if ($attribute->name == 'src') {
+                    if (!preg_match($urlPattern, $attribute->value, $trash)){
+                        $imageUrlList[] =
+                            $urlInfo['scheme'] . 
+                            '://' .
+                            $urlInfo['host'] .
+                            $attribute->value;
+                    }else{
+                        $imageUrlList[] = $attribute->value;
+                    }
+                }
             }
-
-            $imageTag = substr($imageTag, $srcAttributePosition, -1);
-
-            // looks for the first quote of the src attribute
-            $firstQuoteAfterSrc = strpos($imageTag, '"');
-            $imageTag = substr($imageTag, $firstQuoteAfterSrc, -1);
-            $imageTag = substr($imageTag, 1, -1);
-
-            // looks for the last quote of the src attribute
-            $firstQuoteAfterSrc = strpos($imageTag, '"');
-            $srcAttribute = substr($imageTag, 0, $firstQuoteAfterSrc);
-
-            // Checks if the image route is relative. If so, builds a new url
-            // from the relative route.
-            if (!preg_match($this->urlPattern, $srcAttribute, $url)) {
-                $url = parse_url($this->urlToCrawl);
-                $srcAttribute = 
-                    $url['scheme'] . 
-                    '://' .
-                    $url['host'] .
-                    $srcAttribute;
-            }
-
-            $ret[] = $srcAttribute;
         }
-
-        return $ret;
+        return $imageUrlList;
     }
 }

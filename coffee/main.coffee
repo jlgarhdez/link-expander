@@ -28,7 +28,8 @@ expandLink = (url) ->
     if xhr.readyState == 4
       response = JSON.parse xhr.responseText
 
-      expandedInfo = document.getElementsByClassName('expanded-info')[0]
+      expandedInfo = document.createElement 'div'
+      expandedInfo.setAttribute 'class', 'expanded-info'
 
       # Create the anchor item for the title
       link = document.createElement 'a'
@@ -89,6 +90,9 @@ expandLink = (url) ->
       expandedInfo.appendChild description
       expandedInfo.appendChild imagesDiv
       expandedInfo.style.display = 'block'
+
+      container = document.getElementsByClassName('container')[0]
+      container.appendChild expandedInfo
 
   # Performs the xhr
   xhr.send null

@@ -29,11 +29,12 @@
     xhr = new XMLHttpRequest;
     xhr.open("GET", "expander.php?url=" + url, true);
     xhr.onreadystatechange = function(e) {
-      var description, expandedInfo, flag, image, imageUrl, imagesDiv, link, nextImage, previousImage, response, title, _i, _len, _ref;
+      var container, description, expandedInfo, flag, image, imageUrl, imagesDiv, link, nextImage, previousImage, response, title, _i, _len, _ref;
 
       if (xhr.readyState === 4) {
         response = JSON.parse(xhr.responseText);
-        expandedInfo = document.getElementsByClassName('expanded-info')[0];
+        expandedInfo = document.createElement('div');
+        expandedInfo.setAttribute('class', 'expanded-info');
         link = document.createElement('a');
         link.setAttribute('href', url);
         link.innerHTML = response.title;
@@ -76,7 +77,9 @@
         expandedInfo.appendChild(title);
         expandedInfo.appendChild(description);
         expandedInfo.appendChild(imagesDiv);
-        return expandedInfo.style.display = 'block';
+        expandedInfo.style.display = 'block';
+        container = document.getElementsByClassName('container')[0];
+        return container.appendChild(expandedInfo);
       }
     };
     return xhr.send(null);
